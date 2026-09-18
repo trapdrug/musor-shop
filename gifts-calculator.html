@@ -260,8 +260,8 @@
   <p class="store-hint" id="storeHint"></p>
 
   <div class="market">
-    <h3>🔎 Поиск NFT · минимальный прайс Tonnel</h3>
-    <p>Начни вводить название — выбери подарок из списка. Минимальная цена подтянется с маркета Tonnel автоматически.</p>
+    <h3>🔎 Поиск NFT · минимальный прайс (Portals)</h3>
+    <p>Начни вводить название — выбери подарок из списка. Минимальная цена подтянется с маркета Portals автоматически.</p>
     <label for="giftSearch">NFT-подарок</label>
     <div class="gift-pick">
       <input id="giftSearch" placeholder="Например: Plush Pepe" autocomplete="off">
@@ -315,11 +315,9 @@
     { name: 'Vintage Cigar', slug: 'vintagecigar', img: '', floor: null }
   ];
   let GIFT_CATALOG = GIFT_FALLBACK.slice(); // [{name, slug, img, floor}]
-  const GIFT_FLOORS = {};  // name -> минимальный прайс TON с Tonnel
-  let floorTimer = null;
-  let giftRatedTon = null;   // курс TON в $ (для пересчёта цены Tonnel)
-  let giftTonPrice = null;   // выбранная минимальная цена Tonnel, TON
-  let giftTonWithFee = null; // она же с комиссией Tonnel +10%, TON
+  let giftRatedTon = null;   // курс TON в $ (для пересчёта цены)
+  let giftTonPrice = null;   // выбранная минимальная цена, TON
+  let giftTonWithFee = null; // она же с комиссией покупателя Tonnel +10%, TON
   // ================================================
 
   let cenaMonety = CENA_MONETY_FALLBACK; // актуальный курс монеты к доллару
@@ -375,7 +373,7 @@
 
   // ============ ПОИСК NFT + МИНИМАЛЬНЫЙ ПРАЙС TONNEL ============
   // Каталог — Portals (работает прямо из браузера, CORS открыт).
-  // Цена — наш прокси на Vercel (Tonnel из браузера недоступен: 403 Cloudflare).
+  // Минимальная цена — Portals floor. Tonnel (через прокси) — только запасной вариант.
   function proxyBase() {
     return (storageGet(STORAGE_KEY_PROXY) || '').trim().replace(/\/$/, '');
   }
@@ -409,15 +407,14 @@
     }).slice(0, 30);
     if (!items.length) { list.hidden = true; list.innerHTML = ''; return; }
     list.innerHTML = items.map(function (g, i) {
-      const fl = (g.name in GIFT_FLOORS) ? GIFT_FLOORS[g.name]
-               : (isFinite(g.floor) && g.floor > 0 ? g.floor : null);
+      const fl = (isFinite(g.floor) && g.floor > 0) ? g.floor : null;
       const price = (fl != null)
         ? '<span class="mn">' + fl + ' TON</span>'
         : '<span class="mn na">…</span>';
       return '<li data-i="' + i + '">' +
         (g.img ? '<img src="' + g.img + '" alt="" loading="lazy">' : '') +
         '<span class="nm">' + esc(g.name) +
-        '<span class="fl">Tonnel · минимальная цена</span></span>' + price + '</li>';
+        '<span class="fl">Portals · минимальная цена</span></span>' + price + '</li>';
     }).join('');
     list.hidden = false;
     const rows = list.querySelectorAll('li');
@@ -430,8 +427,7 @@
     }
   }
   // Каталог Portals работает без прокси (CORS разрешает GitHub Pages).
-  // У Portals в ответе уже есть floor_price — показываем его сразу,
-  // затем в фоне уточняем через Tonnel (через наш прокси, если он настроен).
+  // Минимальная цена (floor) берётся из Portals — это источник по умолчанию.
   async function loadGiftCatalog() {
     const status = document.getElementById('giftStatus');
     try {
@@ -451,11 +447,8 @@
           floor: (fl > 0 ? fl : null) });
       }
       if (out.length) {
-        const base = proxyBase();
         GIFT_CATALOG = out;
-        status.textContent = 'Каталог: ' + out.length + ' подарков (Portals). Цены в списке — минимальные (floor). Выбери — покажу детали с Tonnel.' +
-          (base ? '' : ' Прокси Tonnel не настроен: точные цены Tonnel появятся после настройки (см. proxy/README.md).');
-        refreshTonnelFloors(out.slice(0, 30));
+        status.textContent = 'Каталог: ' + out.length + ' подарков (Portals). Цены в списке — минимальные (floor Portals). Выбери подарок — покажу карточку.';
       } else {
         status.textContent = 'Каталог Portals пуст — доступны подсказки по популярным подаркам.';
       }
@@ -463,32 +456,12 @@
       status.textContent = 'Каталог Portals недоступен — доступны подсказки по популярным подаркам.';
     }
   }
-  // Фоново уточнить floor-цены Tonnel для видимых подарков (только если есть прокси).
-  // Обновляет список «на лету», без блокировки ввода.
-  async function refreshTonnelFloors(items) {
-    const base = proxyBase();
-    if (!base || !items.length) return;
-    if (floorTimer) clearTimeout(floorTimer);
-    let changed = false;
-    for (const g of items) {
-      if (g.name in GIFT_FLOORS) continue;
-      try {
-        const resp = await fetch(base + '?gift=' + encodeURIComponent(g.name) + '&limit=1');
-        const data = await resp.json();
-        const top = data && data.ok && data.items && data.items[0];
-        GIFT_FLOORS[g.name] = (top && isFinite(top.price)) ? top.price : null;
-        changed = true;
-      } catch (e) { GIFT_FLOORS[g.name] = null; changed = true; }
-    }
-    if (changed) {
-      const input = document.getElementById('giftSearch');
-      const list = document.getElementById('giftList');
-      if (input && list && !list.hidden) renderGiftList(input.value);
-    }
-  }
-  // Выбрал NFT: показать карточку и запросить минимальный прайс с Tonnel.
-  // Цена из каталога Portals видна сразу (и в списке, и в карточке);
-  // Tonnel через прокси уточняет её в фоне, если прокси настроен.
+  // Фоновое уточнение через Tonnel отключено: Portals — источник по умолчанию.
+  // Функция оставлена пустой для совместимости, если где-то ещё вызывается.
+  async function refreshTonnelFloors(items) { /* не используется */ }
+  // Выбрал NFT: показываем минимальный прайс Portals (в карточке и в списке).
+  // Portals — источник по умолчанию (floor_price уже есть в каталоге).
+  // Tonnel через прокси используется только как запасной источник (если Portals промолчал).
   async function pickGift(g) {
     const list = document.getElementById('giftList');
     list.hidden = true;
@@ -502,9 +475,8 @@
     img.alt = g.name;
     img.style.display = g.img ? '' : 'none';
     document.getElementById('giftName').textContent = g.name;
-    document.getElementById('giftMeta').textContent = 'Tonnel · минимальная цена маркета';
-    const portalFloor = (g.name in GIFT_FLOORS && GIFT_FLOORS[g.name] != null) ? GIFT_FLOORS[g.name]
-      : (isFinite(g.floor) && g.floor > 0 ? g.floor : null);
+    document.getElementById('giftMeta').textContent = 'Portals · минимальная цена маркета';
+    const portalFloor = (isFinite(g.floor) && g.floor > 0) ? g.floor : null;
     if (portalFloor != null) {
       giftTonPrice = portalFloor;
       giftTonWithFee = portalFloor * 1.10; // комиссия покупателя Tonnel +10%
@@ -513,11 +485,17 @@
       ? ('Min: ' + portalFloor + ' TON') : 'Запрашиваю минимальный прайс…';
     document.getElementById('giftLink').innerHTML = '';
     const status = document.getElementById('giftStatus');
+    if (portalFloor != null) {
+      status.textContent = 'Минимальная цена «' + g.name + '»: ' + portalFloor + ' TON (Portals floor). ' +
+        'Название подставлено в строку 5. Кнопки ниже подставят эту цену в покупку/продажу.';
+      refreshTonUsd();
+      return;
+    }
+    // Portals не отдал цену — пробуем Tonnel через прокси как запасной источник.
     const base = proxyBase();
     if (!base) {
-      status.textContent = (portalFloor != null)
-        ? ('Минимальная цена «' + g.name + '»: ' + portalFloor + ' TON (Portals floor). Точную цену Tonnel увидишь после настройки прокси (см. proxy/README.md, вариант А). Название подставлено в строку 5. Кнопки ниже подставят эту цену в покупку/продажу.')
-        : 'Чтобы увидеть минимальную цену Tonnel: задеплоить прокси (папка proxy, вариант А: vercel.com → Import → Deploy), затем в консоли страницы один раз выполнить localStorage.setItem("musorProxyUrl", "https://твой-проект.vercel.app/api/floor") и выбрать подарок снова.';
+      status.textContent = 'Минимальная цена «' + g.name + '» недоступна: Portals не отдал floor, ' +
+        'а прокси Tonnel не настроен (см. proxy/README.md, вариант А).';
       refreshTonUsd();
       return;
     }
@@ -527,26 +505,22 @@
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error((data && data.error) || ('HTTP ' + resp.status));
       if (!data.items || !data.items.length) {
-        document.getElementById('giftPrice').textContent = (portalFloor != null)
-          ? ('Min: ' + portalFloor + ' TON (Portals)')
-          : 'Нет в продаже на Tonnel';
-        status.textContent = '«' + g.name + '» сейчас нет в продаже на маркете Tonnel.' +
-          (portalFloor != null ? ' Показываю floor Portals: ' + portalFloor + ' TON.' : '');
+        document.getElementById('giftPrice').textContent = 'Нет в продаже';
+        status.textContent = '«' + g.name + '» сейчас нет в продаже.';
         return;
       }
       const top = data.items[0];
-      GIFT_FLOORS[g.name] = top.price;
       giftTonPrice = top.price;
       giftTonWithFee = top.price_with_fee;
       document.getElementById('giftPrice').textContent =
         'Min: ' + top.price + ' TON (+10% комиссия = ' + top.price_with_fee + ' TON)';
-      let meta = 'Tonnel · минимальная цена маркета';
+      let meta = 'Tonnel (запасной источник) · минимальная цена';
       if (top.model) meta += ' · модель: ' + top.model;
       if (top.backdrop) meta += ' · фон: ' + top.backdrop;
       document.getElementById('giftMeta').textContent = meta;
       document.getElementById('giftLink').innerHTML = top.link
         ? '<a href="' + top.link + '" target="_blank" rel="noopener">Открыть лот на Tonnel →</a>' : '';
-      status.textContent = 'Минимальная цена «' + g.name + '» на Tonnel: ' + top.price + ' TON. Название подставлено в строку 5.';
+      status.textContent = 'Минимальная цена «' + g.name + '» (Tonnel): ' + top.price + ' TON. Название подставлено в строку 5.';
       refreshTonUsd();
     } catch (e) {
       document.getElementById('giftPrice').textContent = 'Не удалось получить цену';
