@@ -101,6 +101,41 @@
   .err, .no { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
   .info { background: rgba(168,85,247,.14); color: #e9d5ff; border: 1px solid rgba(168,85,247,.4); }
 
+  /* ---------- Панель поиска NFT ---------- */
+  .market {
+    margin-top: 18px; background: rgba(36,18,67,.9);
+    border: 1px dashed #a855f7; border-radius: 14px; padding: 14px 16px;
+  }
+  .market h3 { margin: 0 0 6px; font-size: 15px; color: #e9d5ff; letter-spacing: .4px; }
+  .market p { font-size: 12px; color: #a78bfa; margin: 0 0 10px; }
+  .market label { font-size: 11px; color: #c4b5fd; display: block; margin: 6px 0 4px; }
+  .gift-pick { position: relative; }
+  .gift-list {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 5;
+    max-height: 260px; overflow-y: auto; margin: 4px 0 0; padding: 4px;
+    background: #241243; border: 1px solid #7c3aed; border-radius: 12px;
+    box-shadow: 0 14px 40px rgba(0,0,0,.5); list-style: none;
+  }
+  .gift-list li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 8px; border-radius: 9px; cursor: pointer; font-size: 13px; color: #ede9fe;
+  }
+  .gift-list li:hover, .gift-list li.active { background: rgba(168,85,247,.22); }
+  .gift-list img { width: 38px; height: 38px; border-radius: 9px; object-fit: cover; background: #3b1470; flex-shrink: 0; }
+  .gift-list .nm { font-weight: 700; }
+  .gift-list .fl { display: block; font-size: 11px; color: #c4b5fd; font-weight: 400; }
+  .gift-card {
+    display: flex; align-items: center; gap: 12px; margin-top: 12px;
+    background: rgba(124,58,237,.14); border: 1px solid rgba(196,181,253,.35);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .gift-card img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; background: #3b1470; }
+  .gift-card .t { font-size: 14px; font-weight: 800; color: #faf5ff; }
+  .gift-card .s { font-size: 12px; color: #c4b5fd; margin-top: 2px; }
+  .gift-card .pr { font-size: 15px; font-weight: 800; color: #4ade80; margin-top: 4px; }
+  .gift-card a { color: #d8b4fe; font-size: 12px; }
+  #giftStatus { font-size: 12px; color: #a78bfa; margin-top: 8px; line-height: 1.6; }
+
   /* ---------- Топ ---------- */
   .top-wrap { margin-top: 22px; }
   .top-wrap h3 { font-size: 16px; margin: 0 0 10px; color: #faf5ff; }
@@ -216,6 +251,26 @@
   <button onclick="add()">Рассчитать и сохранить</button>
   <p class="store-hint" id="storeHint"></p>
 
+  <div class="market">
+    <h3>🔎 Поиск NFT · минимальный прайс Tonnel</h3>
+    <p>Начни вводить название — выбери подарок из списка. Минимальная цена подтянется с маркета Tonnel автоматически.</p>
+    <label for="giftSearch">NFT-подарок</label>
+    <div class="gift-pick">
+      <input id="giftSearch" placeholder="Например: Plush Pepe" autocomplete="off">
+      <ul class="gift-list" id="giftList" hidden></ul>
+    </div>
+    <div id="giftStatus">Каталог подарков загружается…</div>
+    <div class="gift-card" id="giftCard" hidden>
+      <img id="giftImg" alt="">
+      <div>
+        <div class="t" id="giftName"></div>
+        <div class="s" id="giftMeta"></div>
+        <div class="pr" id="giftPrice"></div>
+        <div id="giftLink"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="result"></div>
 
   <div class="top-wrap" id="topWrap"></div>
@@ -235,6 +290,19 @@
   // Ключи локального хранилища браузера:
   const STORAGE_KEY      = 'gramGiftsV1';  // список подарков (NFT)
   const STORAGE_KEY_KURS = 'gramKursV1';   // введённый курс доллара
+  const STORAGE_KEY_PROXY = 'musorProxyUrl'; // URL прокси Tonnel (Vercel, вариант А)
+  // Резервный каталог на случай, если Portals недоступен:
+  const GIFT_FALLBACK = [
+    { name: 'Plush Pepe',   slug: 'plushpepe',   img: '' },
+    { name: 'Toy Bear',     slug: 'toybear',     img: '' },
+    { name: 'Desk Calendar', slug: 'deskcalendar', img: '' },
+    { name: 'Lunar Snake',  slug: 'lunarsnake',  img: '' },
+    { name: 'Ion Gem',      slug: 'iongem',      img: '' },
+    { name: 'Durov Cap',    slug: 'durovcap',    img: '' },
+    { name: 'Signet Ring',  slug: 'signetring',  img: '' },
+    { name: 'Vintage Cigar', slug: 'vintagecigar', img: '' }
+  ];
+  let GIFT_CATALOG = GIFT_FALLBACK.slice(); // [{name, slug, img}]
   // ================================================
 
   let cenaMonety = CENA_MONETY_FALLBACK; // актуальный курс монеты к доллару
@@ -282,12 +350,139 @@
     });
     refreshGramRate();                          // загрузить курс GRAM сразу
     setInterval(refreshGramRate, 60000);        // авто-обновление каждую минуту
+    initGiftSearch();                           // поиск NFT + минимальный прайс Tonnel
     renderList();                               // показать сохранённый список
     saveGifts();                                // записать список и проверить хранилище
     syncChips();
   }
 
-  // Цена покупки (вход), ₽: монеты × цена GRAM × курс ₽/$
+  // ============ ПОИСК NFT + МИНИМАЛЬНЫЙ ПРАЙС TONNEL ============
+  // Каталог — Portals (работает прямо из браузера, CORS открыт).
+  // Цена — наш прокси на Vercel (Tonnel из браузера недоступен: 403 Cloudflare).
+  function proxyBase() {
+    return (storageGet(STORAGE_KEY_PROXY) || '').trim().replace(/\/$/, '');
+  }
+  function slugifyGift(name) {
+    return String(name || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+  }
+  function initGiftSearch() {
+    const input = document.getElementById('giftSearch');
+    const list  = document.getElementById('giftList');
+    input.addEventListener('input', function () { renderGiftList(this.value); });
+    input.addEventListener('focus', function () { renderGiftList(this.value); });
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.gift-pick')) list.hidden = true;
+    });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const first = list.querySelector('li');
+        if (first && !list.hidden) first.click();
+        else if (input.value.trim()) pickGift({ name: input.value.trim(), slug: slugifyGift(input.value.trim()), img: '' });
+      }
+      if (e.key === 'Escape') list.hidden = true;
+    });
+    loadGiftCatalog();
+  }
+  function renderGiftList(q) {
+    const list = document.getElementById('giftList');
+    q = (q || '').trim().toLowerCase();
+    const items = GIFT_CATALOG.filter(function (g) {
+      return !q || g.name.toLowerCase().indexOf(q) >= 0;
+    }).slice(0, 30);
+    if (!items.length) { list.hidden = true; list.innerHTML = ''; return; }
+    list.innerHTML = items.map(function (g, i) {
+      return '<li data-i="' + i + '">' +
+        (g.img ? '<img src="' + g.img + '" alt="" loading="lazy">' : '') +
+        '<span class="nm">' + esc(g.name) +
+        '<span class="fl">Tonnel · минимальная цена</span></span></li>';
+    }).join('');
+    list.hidden = false;
+    const rows = list.querySelectorAll('li');
+    for (let k = 0; k < rows.length; k++) {
+      (function (li) {
+        li.addEventListener('click', function () {
+          pickGift(items[parseInt(li.getAttribute('data-i'), 10)]);
+        });
+      })(rows[k]);
+    }
+  }
+  // Каталог Portals работает без прокси (CORS разрешает GitHub Pages)
+  async function loadGiftCatalog() {
+    const status = document.getElementById('giftStatus');
+    try {
+      const resp = await fetch('https://portal-market.com/api/collections?limit=200');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const data = await resp.json();
+      const arr = data.collections || data.result || data.items || data.data || [];
+      const out = [];
+      const seen = {};
+      for (const c of arr) {
+        const name = c.name || c.title || c.slug;
+        if (!name || seen[name]) continue;
+        seen[name] = true;
+        out.push({ name: name, slug: slugifyGift(c.slug || name),
+          img: c.image || c.image_url || c.preview || c.icon || '' });
+      }
+      if (out.length) {
+        GIFT_CATALOG = out;
+        status.textContent = 'Каталог: ' + out.length + ' подарков (Portals). Выбери — подтяну минимальную цену с Tonnel.';
+      } else {
+        status.textContent = 'Каталог Portals пуст — доступны подсказки по популярным подаркам.';
+      }
+    } catch (e) {
+      status.textContent = 'Каталог Portals недоступен — доступны подсказки по популярным подаркам.';
+    }
+  }
+  // Выбрал NFT: показать карточку и запросить минимальный прайс с Tonnel
+  async function pickGift(g) {
+    const list = document.getElementById('giftList');
+    list.hidden = true;
+    document.getElementById('giftSearch').value = g.name;
+    document.getElementById('gname').value = g.name;
+    const card = document.getElementById('giftCard');
+    const img  = document.getElementById('giftImg');
+    card.hidden = false;
+    img.src = g.img || '';
+    img.alt = g.name;
+    img.style.display = g.img ? '' : 'none';
+    document.getElementById('giftName').textContent = g.name;
+    document.getElementById('giftMeta').textContent = 'Tonnel · минимальная цена маркета';
+    document.getElementById('giftPrice').textContent = 'Запрашиваю минимальный прайс…';
+    document.getElementById('giftLink').innerHTML = '';
+    const status = document.getElementById('giftStatus');
+    const base = proxyBase();
+    if (!base) {
+      document.getElementById('giftPrice').textContent = 'Прокси не настроен';
+      status.textContent = 'Чтобы увидеть минимальную цену Tonnel: задеплоить прокси (папка proxy, variant A: vercel.com → Import → Deploy), затем в консоли страницы один раз выполнить localStorage.setItem("musorProxyUrl", "https://твой-проект.vercel.app/api/floor") и выбрать подарок снова.';
+      return;
+    }
+    try {
+      status.textContent = 'Ищу минимальную цену «' + g.name + '» на Tonnel…';
+      const resp = await fetch(base + '?gift=' + encodeURIComponent(g.name) + '&limit=5');
+      const data = await resp.json();
+      if (!resp.ok || !data.ok) throw new Error((data && data.error) || ('HTTP ' + resp.status));
+      if (!data.items || !data.items.length) {
+        document.getElementById('giftPrice').textContent = 'Нет в продаже на Tonnel';
+        status.textContent = '«' + g.name + '» сейчас нет в продаже на маркете Tonnel.';
+        return;
+      }
+      const top = data.items[0];
+      document.getElementById('giftPrice').textContent =
+        'Min: ' + top.price + ' TON (+10% комиссия = ' + top.price_with_fee + ' TON)';
+      let meta = 'Tonnel · минимальная цена маркета';
+      if (top.model) meta += ' · модель: ' + top.model;
+      if (top.backdrop) meta += ' · фон: ' + top.backdrop;
+      document.getElementById('giftMeta').textContent = meta;
+      document.getElementById('giftLink').innerHTML = top.link
+        ? '<a href="' + top.link + '" target="_blank" rel="noopener">Открыть лот на Tonnel →</a>' : '';
+      status.textContent = 'Минимальная цена «' + g.name + '» на Tonnel: ' + top.price + ' TON. Название подставлено в строку 5.';
+    } catch (e) {
+      document.getElementById('giftPrice').textContent = 'Не удалось получить цену';
+      status.textContent = 'Прокси недоступен: ' + e.message;
+    }
+  }
+
   function autoEntry() {
     const coins = parseFloat(document.getElementById('coins').value);
     const kurs  = parseFloat(document.getElementById('kurs').value);
