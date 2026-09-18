@@ -122,8 +122,10 @@
   }
   .gift-list li:hover, .gift-list li.active { background: rgba(168,85,247,.22); }
   .gift-list img { width: 38px; height: 38px; border-radius: 9px; object-fit: cover; background: #3b1470; flex-shrink: 0; }
-  .gift-list .nm { font-weight: 700; }
+  .gift-list .nm { font-weight: 700; flex: 1; min-width: 0; }
   .gift-list .fl { display: block; font-size: 11px; color: #c4b5fd; font-weight: 400; }
+  .gift-list .mn { font-size: 12px; font-weight: 800; color: #4ade80; white-space: nowrap; flex-shrink: 0; }
+  .gift-list .mn.na { color: #8b93a7; font-weight: 400; font-size: 11px; }
   .gift-card {
     display: flex; align-items: center; gap: 12px; margin-top: 12px;
     background: rgba(124,58,237,.14); border: 1px solid rgba(196,181,253,.35);
@@ -134,6 +136,12 @@
   .gift-card .s { font-size: 12px; color: #c4b5fd; margin-top: 2px; }
   .gift-card .pr { font-size: 15px; font-weight: 800; color: #4ade80; margin-top: 4px; }
   .gift-card a { color: #d8b4fe; font-size: 12px; }
+  .gift-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button.mini {
+    margin: 0; width: auto; padding: 9px 12px; font-size: 13px;
+    background: rgba(168,85,247,.18); border: 1px solid #7c3aed; box-shadow: none;
+  }
+  button.mini:disabled { opacity: .45; cursor: default; filter: none; }
   #giftStatus { font-size: 12px; color: #a78bfa; margin-top: 8px; line-height: 1.6; }
 
   /* ---------- Топ ---------- */
@@ -267,6 +275,10 @@
         <div class="s" id="giftMeta"></div>
         <div class="pr" id="giftPrice"></div>
         <div id="giftLink"></div>
+        <div class="gift-actions">
+          <button type="button" class="mini" id="btnBuy" onclick="useFloorAsBuy()">⬇ Взять как цену покупки</button>
+          <button type="button" class="mini" id="btnSell" onclick="useFloorAsSell()">⬆ Взять как цену продажи</button>
+        </div>
       </div>
     </div>
   </div>
@@ -293,16 +305,21 @@
   const STORAGE_KEY_PROXY = 'musorProxyUrl'; // URL прокси Tonnel (Vercel, вариант А)
   // Резервный каталог на случай, если Portals недоступен:
   const GIFT_FALLBACK = [
-    { name: 'Plush Pepe',   slug: 'plushpepe',   img: '' },
-    { name: 'Toy Bear',     slug: 'toybear',     img: '' },
-    { name: 'Desk Calendar', slug: 'deskcalendar', img: '' },
-    { name: 'Lunar Snake',  slug: 'lunarsnake',  img: '' },
-    { name: 'Ion Gem',      slug: 'iongem',      img: '' },
-    { name: 'Durov Cap',    slug: 'durovcap',    img: '' },
-    { name: 'Signet Ring',  slug: 'signetring',  img: '' },
-    { name: 'Vintage Cigar', slug: 'vintagecigar', img: '' }
+    { name: 'Plush Pepe',   slug: 'plushpepe',   img: '', floor: null },
+    { name: 'Toy Bear',     slug: 'toybear',     img: '', floor: null },
+    { name: 'Desk Calendar', slug: 'deskcalendar', img: '', floor: null },
+    { name: 'Lunar Snake',  slug: 'lunarsnake',  img: '', floor: null },
+    { name: 'Ion Gem',      slug: 'iongem',      img: '', floor: null },
+    { name: 'Durov Cap',    slug: 'durovcap',    img: '', floor: null },
+    { name: 'Signet Ring',  slug: 'signetring',  img: '', floor: null },
+    { name: 'Vintage Cigar', slug: 'vintagecigar', img: '', floor: null }
   ];
-  let GIFT_CATALOG = GIFT_FALLBACK.slice(); // [{name, slug, img}]
+  let GIFT_CATALOG = GIFT_FALLBACK.slice(); // [{name, slug, img, floor}]
+  const GIFT_FLOORS = {};  // name -> минимальный прайс TON с Tonnel
+  let floorTimer = null;
+  let giftRatedTon = null;   // курс TON в $ (для пересчёта цены Tonnel)
+  let giftTonPrice = null;   // выбранная минимальная цена Tonnel, TON
+  let giftTonWithFee = null; // она же с комиссией Tonnel +10%, TON
   // ================================================
 
   let cenaMonety = CENA_MONETY_FALLBACK; // актуальный курс монеты к доллару
@@ -392,10 +409,15 @@
     }).slice(0, 30);
     if (!items.length) { list.hidden = true; list.innerHTML = ''; return; }
     list.innerHTML = items.map(function (g, i) {
+      const fl = (g.name in GIFT_FLOORS) ? GIFT_FLOORS[g.name]
+               : (isFinite(g.floor) && g.floor > 0 ? g.floor : null);
+      const price = (fl != null)
+        ? '<span class="mn">' + fl + ' TON</span>'
+        : '<span class="mn na">…</span>';
       return '<li data-i="' + i + '">' +
         (g.img ? '<img src="' + g.img + '" alt="" loading="lazy">' : '') +
         '<span class="nm">' + esc(g.name) +
-        '<span class="fl">Tonnel · минимальная цена</span></span></li>';
+        '<span class="fl">Tonnel · минимальная цена</span></span>' + price + '</li>';
     }).join('');
     list.hidden = false;
     const rows = list.querySelectorAll('li');
@@ -407,7 +429,9 @@
       })(rows[k]);
     }
   }
-  // Каталог Portals работает без прокси (CORS разрешает GitHub Pages)
+  // Каталог Portals работает без прокси (CORS разрешает GitHub Pages).
+  // У Portals в ответе уже есть floor_price — показываем его сразу,
+  // затем в фоне уточняем через Tonnel (через наш прокси, если он настроен).
   async function loadGiftCatalog() {
     const status = document.getElementById('giftStatus');
     try {
@@ -421,12 +445,17 @@
         const name = c.name || c.title || c.slug;
         if (!name || seen[name]) continue;
         seen[name] = true;
-        out.push({ name: name, slug: slugifyGift(c.slug || name),
-          img: c.image || c.image_url || c.preview || c.icon || '' });
+        const fl = parseFloat(c.floor_price);
+        out.push({ name: name, slug: slugifyGift(c.short_name || c.slug || name),
+          img: c.photo_url || c.image || c.image_url || c.preview || c.icon || '',
+          floor: (fl > 0 ? fl : null) });
       }
       if (out.length) {
+        const base = proxyBase();
         GIFT_CATALOG = out;
-        status.textContent = 'Каталог: ' + out.length + ' подарков (Portals). Выбери — подтяну минимальную цену с Tonnel.';
+        status.textContent = 'Каталог: ' + out.length + ' подарков (Portals). Цены в списке — минимальные (floor). Выбери — покажу детали с Tonnel.' +
+          (base ? '' : ' Прокси Tonnel не настроен: точные цены Tonnel появятся после настройки (см. proxy/README.md).');
+        refreshTonnelFloors(out.slice(0, 30));
       } else {
         status.textContent = 'Каталог Portals пуст — доступны подсказки по популярным подаркам.';
       }
@@ -434,12 +463,38 @@
       status.textContent = 'Каталог Portals недоступен — доступны подсказки по популярным подаркам.';
     }
   }
-  // Выбрал NFT: показать карточку и запросить минимальный прайс с Tonnel
+  // Фоново уточнить floor-цены Tonnel для видимых подарков (только если есть прокси).
+  // Обновляет список «на лету», без блокировки ввода.
+  async function refreshTonnelFloors(items) {
+    const base = proxyBase();
+    if (!base || !items.length) return;
+    if (floorTimer) clearTimeout(floorTimer);
+    let changed = false;
+    for (const g of items) {
+      if (g.name in GIFT_FLOORS) continue;
+      try {
+        const resp = await fetch(base + '?gift=' + encodeURIComponent(g.name) + '&limit=1');
+        const data = await resp.json();
+        const top = data && data.ok && data.items && data.items[0];
+        GIFT_FLOORS[g.name] = (top && isFinite(top.price)) ? top.price : null;
+        changed = true;
+      } catch (e) { GIFT_FLOORS[g.name] = null; changed = true; }
+    }
+    if (changed) {
+      const input = document.getElementById('giftSearch');
+      const list = document.getElementById('giftList');
+      if (input && list && !list.hidden) renderGiftList(input.value);
+    }
+  }
+  // Выбрал NFT: показать карточку и запросить минимальный прайс с Tonnel.
+  // Цена из каталога Portals видна сразу (и в списке, и в карточке);
+  // Tonnel через прокси уточняет её в фоне, если прокси настроен.
   async function pickGift(g) {
     const list = document.getElementById('giftList');
     list.hidden = true;
     document.getElementById('giftSearch').value = g.name;
     document.getElementById('gname').value = g.name;
+    giftTonPrice = null; giftTonWithFee = null;
     const card = document.getElementById('giftCard');
     const img  = document.getElementById('giftImg');
     card.hidden = false;
@@ -448,13 +503,22 @@
     img.style.display = g.img ? '' : 'none';
     document.getElementById('giftName').textContent = g.name;
     document.getElementById('giftMeta').textContent = 'Tonnel · минимальная цена маркета';
-    document.getElementById('giftPrice').textContent = 'Запрашиваю минимальный прайс…';
+    const portalFloor = (g.name in GIFT_FLOORS && GIFT_FLOORS[g.name] != null) ? GIFT_FLOORS[g.name]
+      : (isFinite(g.floor) && g.floor > 0 ? g.floor : null);
+    if (portalFloor != null) {
+      giftTonPrice = portalFloor;
+      giftTonWithFee = portalFloor * 1.10; // комиссия покупателя Tonnel +10%
+    }
+    document.getElementById('giftPrice').textContent = (portalFloor != null)
+      ? ('Min: ' + portalFloor + ' TON') : 'Запрашиваю минимальный прайс…';
     document.getElementById('giftLink').innerHTML = '';
     const status = document.getElementById('giftStatus');
     const base = proxyBase();
     if (!base) {
-      document.getElementById('giftPrice').textContent = 'Прокси не настроен';
-      status.textContent = 'Чтобы увидеть минимальную цену Tonnel: задеплоить прокси (папка proxy, variant A: vercel.com → Import → Deploy), затем в консоли страницы один раз выполнить localStorage.setItem("musorProxyUrl", "https://твой-проект.vercel.app/api/floor") и выбрать подарок снова.';
+      status.textContent = (portalFloor != null)
+        ? ('Минимальная цена «' + g.name + '»: ' + portalFloor + ' TON (Portals floor). Точную цену Tonnel увидишь после настройки прокси (см. proxy/README.md, вариант А). Название подставлено в строку 5. Кнопки ниже подставят эту цену в покупку/продажу.')
+        : 'Чтобы увидеть минимальную цену Tonnel: задеплоить прокси (папка proxy, вариант А: vercel.com → Import → Deploy), затем в консоли страницы один раз выполнить localStorage.setItem("musorProxyUrl", "https://твой-проект.vercel.app/api/floor") и выбрать подарок снова.';
+      refreshTonUsd();
       return;
     }
     try {
@@ -463,11 +527,17 @@
       const data = await resp.json();
       if (!resp.ok || !data.ok) throw new Error((data && data.error) || ('HTTP ' + resp.status));
       if (!data.items || !data.items.length) {
-        document.getElementById('giftPrice').textContent = 'Нет в продаже на Tonnel';
-        status.textContent = '«' + g.name + '» сейчас нет в продаже на маркете Tonnel.';
+        document.getElementById('giftPrice').textContent = (portalFloor != null)
+          ? ('Min: ' + portalFloor + ' TON (Portals)')
+          : 'Нет в продаже на Tonnel';
+        status.textContent = '«' + g.name + '» сейчас нет в продаже на маркете Tonnel.' +
+          (portalFloor != null ? ' Показываю floor Portals: ' + portalFloor + ' TON.' : '');
         return;
       }
       const top = data.items[0];
+      GIFT_FLOORS[g.name] = top.price;
+      giftTonPrice = top.price;
+      giftTonWithFee = top.price_with_fee;
       document.getElementById('giftPrice').textContent =
         'Min: ' + top.price + ' TON (+10% комиссия = ' + top.price_with_fee + ' TON)';
       let meta = 'Tonnel · минимальная цена маркета';
@@ -477,10 +547,69 @@
       document.getElementById('giftLink').innerHTML = top.link
         ? '<a href="' + top.link + '" target="_blank" rel="noopener">Открыть лот на Tonnel →</a>' : '';
       status.textContent = 'Минимальная цена «' + g.name + '» на Tonnel: ' + top.price + ' TON. Название подставлено в строку 5.';
+      refreshTonUsd();
     } catch (e) {
       document.getElementById('giftPrice').textContent = 'Не удалось получить цену';
       status.textContent = 'Прокси недоступен: ' + e.message;
     }
+  }
+
+  // Курс TON в $: пробуем CoinGecko → Binance → цену GRAM как запасной вариант.
+  // Нужен, чтобы перевести минимальный прайс Tonnel (TON) в монеты/рубли.
+  async function refreshTonUsd() {
+    giftRatedTon = null;
+    const SOURCES = [
+      { name: 'CoinGecko',
+        url: 'https://api.coingecko.com/api/v3/simple/price?ids=the-open-network&vs_currencies=usd',
+        parse: function (d) { return parseFloat(d['the-open-network'].usd); } },
+      { name: 'Binance',
+        url: 'https://api.binance.com/api/v3/ticker/price?symbol=TONUSDT',
+        parse: function (d) { return parseFloat(d.price); } }
+    ];
+    for (const src of SOURCES) {
+      try {
+        const resp = await fetch(src.url);
+        if (!resp.ok) continue;
+        const price = src.parse(await resp.json());
+        if (price > 0) { giftRatedTon = price; return price; }
+      } catch (e) { /* следующий источник */ }
+    }
+    if (cenaMonety > 0) giftRatedTon = cenaMonety; // TON ≈ GRAM как запасной вариант
+    return giftRatedTon;
+  }
+  // Перевести TON → монеты GRAM (для подстановки в строку 3).
+  function tonToCoins(ton, tonRate, gramRate) {
+    if (!(ton > 0) || !(gramRate > 0)) return 0;
+    const usd = (tonRate > 0) ? ton * tonRate : ton; // по паритету 1:1, если курса TON нет
+    return usd / gramRate;
+  }
+  // Кнопка «Взять как цену покупки»: минимальный прайс Tonnel → строка 3 (монеты).
+  // Цена покупки в рублях затем посчитается сама из строк 1–3.
+  async function useFloorAsBuy() {
+    const status = document.getElementById('giftStatus');
+    if (!(giftTonPrice > 0)) { status.textContent = 'Сначала выбери NFT — минимальный прайс ещё не загружен.'; return; }
+    if (!(cenaMonety > 0)) { status.textContent = 'Дождись загрузки курса GRAM (строка 2).'; return; }
+    if (!(giftRatedTon > 0)) {
+      status.textContent = 'Подтягиваю курс TON для пересчёта…';
+      await refreshTonUsd();
+    }
+    const coins = tonToCoins(giftTonPrice, giftRatedTon, cenaMonety);
+    if (!(coins > 0)) { status.textContent = 'Не смог пересчитать TON в монеты — проверь курсы.'; return; }
+    document.getElementById('coins').value = coins.toFixed(4);
+    document.getElementById('coins').focus();
+    status.textContent = 'В строку 3 подставлено ' + coins.toFixed(4) + ' монет (≈ ' + giftTonPrice +
+      ' TON по минимальному прайсу Tonnel). Заполни остальные строки и жми «Рассчитать и сохранить» — цена покупки в рублях запишется в список.';
+  }
+  // Кнопка «Взять как цену продажи»: минимальный прайс Tonnel → строка 4 (X).
+  // Цена продажи в рублях затем посчитается сама с комиссиями 10% + 6%.
+  function useFloorAsSell() {
+    const status = document.getElementById('giftStatus');
+    if (!(giftTonWithFee > 0)) { status.textContent = 'Сначала выбери NFT — минимальный прайс ещё не загружен.'; return; }
+    if (!(cenaMonety > 0)) { status.textContent = 'Дождись загрузки курса GRAM (строка 2).'; return; }
+    document.getElementById('x').value = giftTonWithFee.toFixed(4);
+    document.getElementById('x').focus();
+    status.textContent = 'В строку 4 подставлено ' + giftTonWithFee.toFixed(4) +
+      ' (≈ ' + giftTonPrice + ' TON + 10% комиссии Tonnel). Заполни остальные строки и жми «Рассчитать и сохранить» — цена продажи в рублях запишется в список.';
   }
 
   function autoEntry() {
