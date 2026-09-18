@@ -101,20 +101,6 @@
   .err, .no { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
   .info { background: rgba(168,85,247,.14); color: #e9d5ff; border: 1px solid rgba(168,85,247,.4); }
 
-  /* Маркет-блок Tonnel */
-  .market {
-    margin-top: 18px; background: rgba(36,18,67,.9);
-    border: 1px dashed #a855f7; border-radius: 14px; padding: 14px 16px;
-  }
-  .market h3 { margin: 0 0 6px; font-size: 15px; color: #e9d5ff; letter-spacing: .4px; }
-  .market p { font-size: 12px; color: #a78bfa; margin: 0 0 10px; }
-  .market .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .market .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  @media (max-width: 560px) { .market .row, .market .row3 { grid-template-columns: 1fr; } }
-  .market label { font-size: 11px; color: #c4b5fd; display: block; margin: 6px 0 4px; }
-  #floorResult { font-size: 13px; color: #ede9fe; margin-top: 10px; line-height: 1.6; }
-  #floorResult a { color: #d8b4fe; }
-
   /* ---------- Топ ---------- */
   .top-wrap { margin-top: 22px; }
   .top-wrap h3 { font-size: 16px; margin: 0 0 10px; color: #faf5ff; }
@@ -205,7 +191,7 @@
       <span class="chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg><span>Подарок</span></span>
     </div>
   </header>
-  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз. Строки 5–6 — цена входа и цена выхода: можно ввести руками, а можно оставить пустыми — тогда посчитается автоматически (значение подсказано в поле как «авто: …»).</p>
+  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз: сколько монет потратил и значение X. Калькулятор сам посчитает цену покупки и цену продажи в рублях и запишет их в список.</p>
 
   <table>
     <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.2" y="2.2" width="19.6" height="19.6" rx="5.5" fill="#ea580c"/><text x="12" y="17.6" font-family="Segoe UI, Arial" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">₽</text></svg>1. Курс доллара к рублю</span><span class="sub">Вводишь вручную — например, актуальный курс P2P</span></td><td><input id="kurs" type="number" min="0" step="any" placeholder="0"></td></tr>
@@ -224,38 +210,11 @@
       <td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><text x="12" y="17.2" font-family="Segoe UI, Arial" font-weight="bold" font-size="13" fill="#fff" text-anchor="middle">$</text></svg>4. Стоимость продажи (значение X)</span><span class="sub">Из X вычитается 10%, затем ещё 6%</span></td>
       <td><input id="x" type="number" min="0" step="any" placeholder="0"></td>
     </tr>
-    <tr>
-      <td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="13" rx="3" fill="#0ea5e9"/><rect x="2.5" y="6" width="19" height="4.5" rx="2" fill="#0369a1"/><circle cx="17.6" cy="14" r="1.7" fill="#fff"/></svg>5. Цена входа, ₽</span><span class="sub">Сколько вложил. Пусто — считается как: монеты × цена GRAM × курс</span></td>
-      <td><input id="entry" type="number" min="0" step="any" placeholder="0"></td>
-    </tr>
-    <tr>
-      <td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#22c55e"/><path d="M12 16.5 V8 M8.6 11.2 L12 7.6 L15.4 11.2" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>6. Цена выхода, ₽</span><span class="sub">Сколько получу после комиссий 10% + 6%. Пусто — считается как: X минус 10%, затем минус 6%</span></td>
-      <td><input id="exit" type="number" min="0" step="any" placeholder="0"></td>
-    </tr>
-    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg>7. Название подарка</span></td><td><input id="gname" placeholder="Например: Бык Дикого леса"></td></tr>
+    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg>5. Название подарка</span></td><td><input id="gname" placeholder="Например: Бык Дикого леса"></td></tr>
   </table>
 
   <button onclick="add()">Рассчитать и сохранить</button>
   <p class="store-hint" id="storeHint"></p>
-
-  <div class="market">
-    <h3>🛒 Маркет Tonnel — floor-цена NFT</h3>
-    <p>Выбери подарок и модель — подтянется самая дешёвая цена с маркета. Либо введи цену в TON вручную — она пересчитается в монеты и подставится в строку 3.</p>
-    <label for="proxyUrl">URL прокси (Vercel, вариант А)</label>
-    <input id="proxyUrl" placeholder="https://твой-проект.vercel.app/api/floor">
-    <div class="row">
-      <div><label for="mkGift">Подарок</label><input id="mkGift" list="giftList" placeholder="Например: Toy Bear"></div>
-      <div><label for="mkModel">Модель (необязательно)</label><input id="mkModel" placeholder="Например: Wizard"></div>
-    </div>
-    <datalist id="giftList"></datalist>
-    <div class="row">
-      <div><label for="mkTon">Цена вручную, TON</label><input id="mkTon" type="number" min="0" step="any" placeholder="0"></div>
-      <div><label for="mkTonRate">Курс TON, $ (для пересчёта в монеты)</label><input id="mkTonRate" type="number" min="0" step="any" placeholder="авто: GRAM"></div>
-    </div>
-    <button type="button" class="ghost" onclick="fetchFloor()">🔎 Найти floor-цену</button>
-    <button type="button" class="ghost" onclick="applyTon()">💰 Пересчитать TON → монеты</button>
-    <div id="floorResult"></div>
-  </div>
 
   <div id="result"></div>
 
@@ -270,16 +229,12 @@
   // Строка 2 — импортируется автоматически (GRAM/USDT с биржи).
   // Ниже запасное значение на случай отсутствия интернета/ошибки API:
   const CENA_MONETY_FALLBACK = 1.35;  // $ за 1 монету (GRAM)
-  // Комиссии при продаже (значение X → цена выхода):
+  // Комиссии при продаже (значение X → цена продажи):
   const COMMISSION_1 = 0.10;          // первая комиссия — 10%
   const COMMISSION_2 = 0.06;          // вторая комиссия — 6%
   // Ключи локального хранилища браузера:
   const STORAGE_KEY      = 'gramGiftsV1';  // список подарков (NFT)
   const STORAGE_KEY_KURS = 'gramKursV1';   // введённый курс доллара
-  const STORAGE_KEY_PROXY = 'musorProxyUrl'; // URL прокси Tonnel (Vercel)
-  // Список популярных подарков для подсказок (дополняется из Portals):
-  let GIFT_NAMES = ['Toy Bear', 'Desk Calendar', 'Lunar Snake', 'Plush Pepe',
-    'Ion Gem', 'Durov Cap', 'Signet Ring', 'Vintage Cigar'];
   // ================================================
 
   let cenaMonety = CENA_MONETY_FALLBACK; // актуальный курс монеты к доллару
@@ -324,127 +279,26 @@
     kursEl.addEventListener('input', function () {
       storageSet(STORAGE_KEY_KURS, this.value); // курс тоже запоминаем
       syncChips();
-      updateHints();
     });
     refreshGramRate();                          // загрузить курс GRAM сразу
     setInterval(refreshGramRate, 60000);        // авто-обновление каждую минуту
-    initMarket();                               // прокси URL, подсказки подарков
     renderList();                               // показать сохранённый список
     saveGifts();                                // записать список и проверить хранилище
     syncChips();
-    updateHints();
   }
 
-  // ============ МАРКЕТ TONNEL (вариант А: прокси на Vercel) ============
-  function proxyBase() {
-    const el = document.getElementById('proxyUrl');
-    return (el && el.value || '').trim().replace(/\/$/, '');
-  }
-  function initMarket() {
-    const saved = storageGet(STORAGE_KEY_PROXY);
-    const el = document.getElementById('proxyUrl');
-    if (el) {
-      if (saved) el.value = saved;
-      el.addEventListener('input', function () { storageSet(STORAGE_KEY_PROXY, this.value.trim()); });
-    }
-    fillGiftList();
-    loadPortalGifts(); // каталог подарков прямо из браузера (Portals, CORS открыт)
-  }
-  function fillGiftList() {
-    const dl = document.getElementById('giftList');
-    if (!dl) return;
-    dl.innerHTML = GIFT_NAMES.map(function (n) { return '<option value="' + esc(n) + '">'; }).join('');
-  }
-  // Каталог подарков Portals: работает без прокси (CORS разрешает GitHub Pages)
-  async function loadPortalGifts() {
-    try {
-      const resp = await fetch('https://portal-market.com/api/collections?limit=100');
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const list = data.collections || data.result || data.items || data.data || [];
-      const names = [];
-      for (const c of list) {
-        const n = c.name || c.title || c.slug;
-        if (n && names.indexOf(n) < 0) names.push(n);
-      }
-      if (names.length) {
-        const merged = GIFT_NAMES.concat(names.filter(function (n) { return GIFT_NAMES.indexOf(n) < 0; }));
-        GIFT_NAMES = merged.slice(0, 200);
-        fillGiftList();
-      }
-    } catch (e) { /* каталог недоступен — остаются встроенные подсказки */ }
-  }
-  // Floor-цена: подарок (+ модель) → самая дешёвая цена маркета
-  async function fetchFloor() {
-    const box = document.getElementById('floorResult');
-    const base = proxyBase();
-    if (!base) {
-      box.innerHTML = '⚠ Сначала вставь URL прокси (Vercel, вариант А) в поле выше — задеплоить: vercel.com → Import → Deploy.';
-      return;
-    }
-    const gift = document.getElementById('mkGift').value.trim();
-    const model = document.getElementById('mkModel').value.trim();
-    const q = 'gift=' + encodeURIComponent(gift) + (model ? '&model=' + encodeURIComponent(model) : '') + '&limit=5';
-    box.textContent = '⏳ Ищу floor-цену…';
-    try {
-      const resp = await fetch(base + '?' + q);
-      const data = await resp.json();
-      if (!resp.ok || !data.ok) throw new Error(data.error || ('HTTP ' + resp.status));
-      if (!data.items || !data.items.length) {
-        box.textContent = '❌ Нет в продаже' + (gift ? (' — «' + gift + '»') : '') + (model ? (' / модель «' + model + '»') : '');
-        return;
-      }
-      const top = data.items[0];
-      box.innerHTML = '💎 Floor: <b>' + top.price + ' TON</b> (+10% комиссия = ' + top.price_with_fee +
-        ' TON)' + (top.model ? ' · модель: ' + esc(top.model) : '') +
-        (top.backdrop ? ' · фон: ' + esc(top.backdrop) : '') +
-        (top.link ? ' · <a href="' + top.link + '" target="_blank" rel="noopener">лот на Tonnel →</a>' : '') +
-        '<br>Вставь <b>' + top.price + '</b> в поле «Цена вручную, TON» и нажми «Пересчитать TON → монеты» — значение попадёт в строку 3.';
-      document.getElementById('mkTon').value = top.price;
-      if (gift) document.getElementById('gname').value = gift + (model ? ' · ' + model : '');
-    } catch (e) {
-      box.textContent = '⚠ Прокси недоступен: ' + e.message;
-    }
-  }
-  // Ручная цена в TON → монеты → строка 3.
-  // Логика: USD-стоимость = ton × курс TON ($); монеты = USD / цена GRAM ($).
-  // Если курс TON не введён — считаем паритет 1 TON ≈ 1 GRAM.
-  function applyTon() {
-    const box = document.getElementById('floorResult');
-    const ton = parseFloat(document.getElementById('mkTon').value);
-    if (!(ton > 0)) { box.textContent = '❌ Введи цену в TON (вручную или кнопкой «Найти floor-цену»).'; return; }
-    if (!(cenaMonety > 0)) { box.textContent = '❌ Нет курса монеты — дождись загрузки курса GRAM.'; return; }
-    const rateEl = document.getElementById('mkTonRate');
-    const tonRate = parseFloat(rateEl.value);
-    const coins = (tonRate > 0) ? (ton * tonRate / cenaMonety) : ton;
-    document.getElementById('coins').value = coins.toFixed(4);
-    updateHints();
-    box.textContent = (tonRate > 0)
-      ? ('✅ Подставлено в строку 3: ' + coins.toFixed(4) + ' монет (' + ton + ' TON × $' + tonRate + ' ÷ $' + cenaMonety + ' за GRAM). Проверь строку 1 (курс ₽) и жми «Рассчитать и сохранить».')
-      : ('✅ Подставлено в строку 3: ' + coins.toFixed(4) + ' монет (≈ ' + ton + ' TON по паритету 1:1 к GRAM). Проверь строку 1 (курс ₽) и жми «Рассчитать и сохранить».');
-  }
-
-  // Автосчёт цены входа: монеты × цена GRAM × курс ₽/$
+  // Цена покупки (вход), ₽: монеты × цена GRAM × курс ₽/$
   function autoEntry() {
     const coins = parseFloat(document.getElementById('coins').value);
     const kurs  = parseFloat(document.getElementById('kurs').value);
     if (!(coins > 0) || !(kurs > 0)) return 0;
     return coins * cenaMonety * kurs;
   }
-  // Автосчёт цены выхода: X минус 10%, затем минус 6%
+  // Цена продажи (выход), ₽: X минус 10%, затем минус 6%
   function autoExit() {
     const x = parseFloat(document.getElementById('x').value);
     if (!(x > 0)) return 0;
     return x * (1 - COMMISSION_1) * (1 - COMMISSION_2);
-  }
-  // Подсказки «авто: …» в полях цены входа/выхода
-  function updateHints() {
-    const entryEl = document.getElementById('entry');
-    const exitEl  = document.getElementById('exit');
-    const ae = autoEntry();
-    const ax = autoExit();
-    if (entryEl) entryEl.placeholder = ae > 0 ? ('авто: ' + fmt(ae)) : '0';
-    if (exitEl)  exitEl.placeholder  = ax > 0 ? ('авто: ' + fmt(ax)) : '0';
   }
 
   function showResult(html) {
@@ -455,8 +309,6 @@
     const kursEl  = document.getElementById('kurs');
     const coinsEl = document.getElementById('coins');
     const xEl     = document.getElementById('x');
-    const entryEl = document.getElementById('entry');
-    const exitEl  = document.getElementById('exit');
     const nameEl  = document.getElementById('gname');
 
     const kurs  = parseFloat(kursEl.value);
@@ -464,21 +316,21 @@
     const x     = parseFloat(xEl.value);
     const name  = nameEl.value.trim();
 
-    const entryManual = parseFloat(entryEl.value);
-    const exitManual  = parseFloat(exitEl.value);
-    const entry = entryManual > 0 ? entryManual : autoEntry();   // сколько вложил, ₽
-    const exit  = exitManual  > 0 ? exitManual  : autoExit();    // получу после комиссий, ₽
+    // Цена покупки (за сколько купил), ₽ — считается автоматически
+    const entry = autoEntry();
+    // Цена продажи (за сколько продал, после комиссий), ₽ — считается автоматически
+    const exit  = autoExit();
 
     if (!name) {
-      showResult('<div class="msg err">❌ Укажи название подарка (строка 7).</div>');
+      showResult('<div class="msg err">❌ Укажи название подарка (строка 5).</div>');
       return;
     }
-    if (!(entry > 0)) {
-      showResult('<div class="msg err">❌ Не вижу цену входа: введи её в строке 5 или заполни строки 1–3 (курс, монеты).</div>');
+    if (!(coins > 0) || !(kurs > 0) || !(entry > 0)) {
+      showResult('<div class="msg err">❌ Заполни строки 1–3 (курс, монеты) — цена покупки посчитается сама.</div>');
       return;
     }
-    if (!(exit > 0)) {
-      showResult('<div class="msg err">❌ Не вижу цену выхода: введи её в строке 6 или заполни строку 4 (значение X).</div>');
+    if (!(x > 0) || !(exit > 0)) {
+      showResult('<div class="msg err">❌ Заполни строку 4 (значение X) — цена продажи посчитается сама.</div>');
       return;
     }
 
@@ -503,17 +355,14 @@
 
     showResult('<div class="msg ' + (diff > 0 ? 'ok' : 'no') + '">' +
       (diff > 0 ? '✅' : '⚠') + ' Подарок: <b>' + esc(name) + '</b> — разница <b>' + fmt(diff) +
-      ' ₽</b><br><span style="font-size:13px">Вход: ' + fmt(entry) +
-      ' ₽ &nbsp;·&nbsp; Выход после комиссий (' + Math.round(COMMISSION_1 * 100) + '% + ' +
+      ' ₽</b><br><span style="font-size:13px">Купил: ' + fmt(entry) +
+      ' ₽ &nbsp;·&nbsp; Продал после комиссий (' + Math.round(COMMISSION_1 * 100) + '% + ' +
       Math.round(COMMISSION_2 * 100) + '%): ' + fmt(exit) + ' ₽</span></div>');
 
-    // Очистить строки 3–6 для следующего ввода (курс и цена GRAM остаются)
+    // Очистить строки 3–5 для следующего ввода (курс и цена GRAM остаются)
     coinsEl.value = '';
     xEl.value = '';
-    entryEl.value = '';
-    exitEl.value = '';
     nameEl.value = '';
-    updateHints();
     coinsEl.focus();
   }
 
@@ -529,7 +378,7 @@
     let sumIn = 0, sumOut = 0, sumDiff = 0;
 
     let html = '<h3>🏆 Список подарков (NFT) <span class="cnt">' + gifts.length + '</span></h3>' +
-      '<table><tr><th>#</th><th>Подарок</th><th>Вход, ₽</th><th>Выход, ₽</th><th>Разница, ₽</th><th></th></tr>';
+      '<table><tr><th>#</th><th>Подарок</th><th>Купил, ₽</th><th>Продал, ₽</th><th>Разница, ₽</th><th></th></tr>';
 
     sorted.forEach(function (g, i) {
       sumIn   += g.entry;
@@ -620,7 +469,6 @@
         statusEl.textContent = '✓ Курс GRAM/USDT: $' + price +
           ' (источник: ' + src.name + ', ' + new Date().toLocaleTimeString('ru-RU') + ')';
         statusEl.style.color = '#166534';
-        if (typeof updateHints === 'function') updateHints();
         return;
       } catch (e) { /* пробуем следующий источник */ }
     }
@@ -630,7 +478,6 @@
     statusEl.textContent = '⚠ Ошибка загрузки курса — используется запасное значение $' +
       CENA_MONETY_FALLBACK + ' (Bybit, Binance и OKX недоступны)';
     statusEl.style.color = '#b45309';
-    if (typeof updateHints === 'function') updateHints();
   }
 
   load();
