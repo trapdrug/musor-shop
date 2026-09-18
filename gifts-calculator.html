@@ -160,21 +160,42 @@
     <div class="brand">
       <svg class="fish-logo" viewBox="0 0 64 64" aria-hidden="true">
         <circle cx="32" cy="32" r="30" fill="#2a1152" stroke="#9ca3af" stroke-width="2.5"/>
-        <g fill="none" stroke="#9ca3af" stroke-width="2.4" stroke-linecap="round">
-          <line x1="10" y1="32" x2="46" y2="32"/>
-          <line x1="18" y1="32" x2="24" y2="24"/>
-          <line x1="18" y1="32" x2="24" y2="40"/>
-          <line x1="28" y1="32" x2="34" y2="22"/>
-          <line x1="28" y1="32" x2="34" y2="42"/>
-          <line x1="38" y1="32" x2="43" y2="25"/>
-          <line x1="38" y1="32" x2="43" y2="39"/>
+        <!-- Скелет рыбы, вид сбоку, голова слева -->
+        <g fill="none" stroke="#c7cdd6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Череп: треугольник + глазница + челюсть -->
+          <path d="M18 24.5 L8.5 32 L18 39.5 Z"/>
+          <path d="M18 24.5 L22 32 L18 39.5"/>
+          <path d="M8.5 32 L22 32"/>
+          <!-- Позвоночник -->
+          <line x1="22" y1="32" x2="46" y2="32"/>
+          <!-- Позвонки-узлы -->
+          <circle cx="26" cy="32" r="0.9" fill="#c7cdd6" stroke="none"/>
+          <circle cx="31" cy="32" r="0.9" fill="#c7cdd6" stroke="none"/>
+          <circle cx="36" cy="32" r="0.9" fill="#c7cdd6" stroke="none"/>
+          <circle cx="41" cy="32" r="0.9" fill="#c7cdd6" stroke="none"/>
+          <!-- Рёбра верх/низ -->
+          <path d="M26 32 L23 24.5 M26 32 L28.5 24.5"/>
+          <path d="M26 32 L23 39.5 M26 32 L28.5 39.5"/>
+          <path d="M31 32 L28 24 M31 32 L33.5 24"/>
+          <path d="M31 32 L28 40 M31 32 L33.5 40"/>
+          <path d="M36 32 L33.5 24.5 M36 32 L38.5 24.5"/>
+          <path d="M36 32 L33.5 39.5 M36 32 L38.5 39.5"/>
+          <path d="M41 32 L39 25.5 M41 32 L43 25.5"/>
+          <path d="M41 32 L39 38.5 M41 32 L43 38.5"/>
+          <!-- Спинной плавник -->
+          <path d="M30 24 L32 18.5 L35 24"/>
+          <!-- Брюшной плавник -->
+          <path d="M30 40 L32 45.5 L35 40"/>
+          <!-- Хвост: стебель + вилка -->
+          <line x1="46" y1="32" x2="50" y2="32"/>
+          <path d="M50 32 L57 24.5 L54.5 32 L57 39.5 Z"/>
         </g>
-        <circle cx="14" cy="32" r="4.5" fill="#9ca3af"/>
-        <path d="M46 22 L57 32 L46 42 Z" fill="#9ca3af"/>
+        <!-- Глазница -->
+        <circle cx="14" cy="31" r="2.2" fill="#2a1152" stroke="#c7cdd6" stroke-width="1.6"/>
       </svg>
       <div>
         <h1>MUSOR <span class="accent">SHOP</span></h1>
-        <div class="subtitle">NFT-калькулятор · floor-цены Tonnel · курс ₽ вручную</div>
+        <div class="subtitle">gift calculator</div>
       </div>
     </div>
     <div class="chips">
