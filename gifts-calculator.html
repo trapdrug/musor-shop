@@ -11,9 +11,13 @@
     margin: 0; padding: 0;
     min-height: 100vh;
     color: #f3e8ff;
-    background: #150826 radial-gradient(1200px 600px at 20% -5%, #3b1470 0%, transparent 60%),
-                radial-gradient(1000px 500px at 90% 10%, #4c1d95 0%, transparent 55%),
-                #150826;
+    /* Раньше фон был задан одним сокращением `background`, где цвет стоял не в последнем слое —
+       браузер отбрасывал всё объявление и страница оставалась белой. Разделили на background-color/background-image. */
+    background-color: #150826;
+    background-image:
+      radial-gradient(1200px 600px at 20% -5%, #3b1470 0%, transparent 60%),
+      radial-gradient(1000px 500px at 90% 10%, #4c1d95 0%, transparent 55%);
+    background-attachment: fixed;
     overflow-x: hidden;
   }
   /* Фон из NFT-подарков Telegram */
@@ -101,6 +105,34 @@
   .err, .no { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.35); }
   .info { background: rgba(168,85,247,.14); color: #e9d5ff; border: 1px solid rgba(168,85,247,.4); }
 
+  /* ---------- Вкладки ---------- */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+  .tab {
+    margin: 0; width: auto; padding: 11px 18px; font-size: 14px; font-weight: 700;
+    color: #f5f3ff; background: rgba(168,85,247,.18);
+    border: 1px solid rgba(196,181,253,.45); box-shadow: none;
+  }
+  .tab:hover { background: rgba(168,85,247,.32); filter: none; }
+  .tab.active { background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; border-color: #a855f7; box-shadow: 0 4px 18px rgba(168,85,247,.35); }
+  .tab-panel { display: block; }
+  .tab-panel[hidden] { display: none; }
+
+  /* ---------- Блок результата (цена продажи по профиту) ---------- */
+  .profit-box {
+    margin-top: 16px; padding: 16px 18px; border-radius: 14px;
+    background: rgba(36,18,67,.92); border: 1px solid #a855f7;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  .profit-box .cap { font-size: 12px; color: #c4b5fd; letter-spacing: .4px; }
+  .profit-box .big { font-size: 32px; font-weight: 900; color: #4ade80; margin: 2px 0 10px; }
+  .profit-box .xval { font-size: 20px; font-weight: 900; color: #fbbf24; margin: 2px 0 12px; }
+  .profit-box table { background: transparent; border: none; box-shadow: none; }
+  .profit-box tr:nth-child(even) { background: transparent; }
+  .profit-box td { padding: 5px 0; font-size: 13px; border-bottom: 1px solid rgba(196,181,253,.12); }
+  .profit-box td.k { color: #c4b5fd; }
+  .profit-box td.v { text-align: right; font-weight: 700; color: #faf5ff; }
+  .hint-enter { font-size: 12px; color: #a78bfa; margin: 10px 0 0; text-align: center; }
+
   /* ---------- Панель поиска NFT ---------- */
   .market {
     margin-top: 18px; background: rgba(36,18,67,.9);
@@ -144,34 +176,7 @@
   button.mini:disabled { opacity: .45; cursor: default; filter: none; }
   #giftStatus { font-size: 12px; color: #a78bfa; margin-top: 8px; line-height: 1.6; }
 
-  /* ---------- Топ ---------- */
-  .top-wrap { margin-top: 22px; }
-  .top-wrap h3 { font-size: 16px; margin: 0 0 10px; color: #faf5ff; }
-  .top-wrap td { border-bottom: 1px solid rgba(196,181,253,.12); }
-
   .note { font-size: 12px; color: #a78bfa; margin: 0 0 14px; }
-
-  /* ---------- Список сохранённых подарков (NFT) ---------- */
-  .top-wrap .cnt {
-    font-size: 12px; font-weight: 700; color: #f5f3ff;
-    background: rgba(168,85,247,.25); border: 1px solid rgba(168,85,247,.5);
-    border-radius: 999px; padding: 2px 9px; vertical-align: 2px; margin-left: 6px;
-  }
-  .top-wrap th, .top-wrap td { font-size: 13px; padding: 10px 12px; }
-  .top-wrap td.pos { color: #86efac; }
-  .top-wrap td.neg { color: #fca5a5; }
-  tr.totals { background: rgba(168,85,247,.16); }
-  tr.totals td { border-top: 1px solid rgba(196,181,253,.3); font-weight: 700; }
-  button.del {
-    margin: 0; width: auto; padding: 4px 10px; font-size: 14px; line-height: 1.2;
-    background: #581c87; box-shadow: none;
-  }
-  button.del:hover { background: #7e22ce; filter: none; }
-  button.clear {
-    margin-top: 12px; font-size: 14px; background: #3b1470; box-shadow: none;
-  }
-  button.clear:hover { background: #4c1d95; filter: none; }
-  .store-hint { margin: 12px 0 0; font-size: 12px; color: #a78bfa; }
 </style>
 </head>
 <body>
@@ -234,8 +239,16 @@
       <span class="chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg><span>Подарок</span></span>
     </div>
   </header>
-  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз: сколько монет потратил и значение X. Калькулятор сам посчитает цену покупки и цену продажи в рублях и запишет их в список.</p>
+  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз: сколько монет потратил и значение X. Калькулятор сам посчитает цену покупки (с +0.35 монеты) и цену продажи в рублях. Из профита вычитается 60 ₽. Вкладка «Цена продажи» считает, за сколько ₽ продать подарок, чтобы получить нужный профит.</p>
 
+  <!-- ==================== ВКЛАДКИ ==================== -->
+  <div class="tabs" role="tablist">
+    <button type="button" class="tab active" id="tabCalc" data-tab="calc" role="tab" aria-selected="true">💰 Расчёт покупки и продажи</button>
+    <button type="button" class="tab" id="tabProfit" data-tab="profit" role="tab" aria-selected="false">🎯 Цена продажи по профиту</button>
+  </div>
+
+  <!-- ==================== ВКЛАДКА 1: РАСЧЁТ ==================== -->
+  <form id="calcForm" class="tab-panel" data-panel="calc" autocomplete="off">
   <table>
     <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.2" y="2.2" width="19.6" height="19.6" rx="5.5" fill="#ea580c"/><text x="12" y="17.6" font-family="Segoe UI, Arial" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">₽</text></svg>1. Курс доллара к рублю</span><span class="sub">Вводишь вручную — например, актуальный курс P2P</span></td><td><input id="kurs" type="number" min="0" step="any" placeholder="0"></td></tr>
     <tr>
@@ -248,16 +261,33 @@
         <div id="rateStatus" style="font-size:11px; color:#77808f; margin-top:4px;"></div>
       </td>
     </tr>
-    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>3. Сколько монет потратил</span></td><td><input id="coins" type="number" min="0" step="any" placeholder="0"></td></tr>
+    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>3. Сколько монет потратил</span><span class="sub">К этому количеству автоматически прибавляется 0.35 монеты</span></td><td><input id="coins" type="number" min="0" step="any" placeholder="0"></td></tr>
     <tr>
       <td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><text x="12" y="17.2" font-family="Segoe UI, Arial" font-weight="bold" font-size="13" fill="#fff" text-anchor="middle">$</text></svg>4. Стоимость продажи (значение X)</span><span class="sub">Из X вычитается 10%, затем ещё 6%</span></td>
       <td><input id="x" type="number" min="0" step="any" placeholder="0"></td>
     </tr>
-    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg>5. Название подарка</span></td><td><input id="gname" placeholder="Например: Бык Дикого леса"></td></tr>
+    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg>5. Название подарка</span><span class="sub">Необязательно — можно оставить пустым</span></td><td><input id="gname" placeholder="Например: Бык Дикого леса"></td></tr>
   </table>
 
-  <button onclick="add()">Рассчитать и сохранить</button>
-  <p class="store-hint" id="storeHint"></p>
+  <button type="submit">Рассчитать</button>
+  <p class="hint-enter">На ПК можно нажать <b>Enter</b> в любом поле — расчёт выполнится сразу.</p>
+
+  <div id="result"></div>
+  </form>
+
+  <!-- ==================== ВКЛАДКА 2: ЦЕНА ПРОДАЖИ ПО ПРОФИТУ ==================== -->
+  <form id="profitForm" class="tab-panel" data-panel="profit" hidden autocomplete="off">
+    <table>
+      <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>1. Сколько монет потратил</span><span class="sub">К этому количеству автоматически прибавляется 0.35 монеты</span></td><td><input id="pCoins" type="number" min="0" step="any" placeholder="0"></td></tr>
+      <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><text x="12" y="17.2" font-family="Segoe UI, Arial" font-weight="bold" font-size="13" fill="#fff" text-anchor="middle">$</text></svg>2. Профит, который хочу получить</span><span class="sub">В рублях — сколько заработать на подарке</span></td><td><input id="pProfit" type="number" step="any" placeholder="0"></td></tr>
+      <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.2" y="2.2" width="19.6" height="19.6" rx="5.5" fill="#ea580c"/><text x="12" y="17.6" font-family="Segoe UI, Arial" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">₽</text></svg>Курс доллара к рублю</span><span class="sub">Берётся из строки 1 первой вкладки</span></td><td><input id="pKurs" type="number" min="0" step="any" placeholder="Курс"></td></tr>
+    </table>
+
+    <button type="submit">Рассчитать цену продажи</button>
+    <p class="hint-enter">На ПК можно нажать <b>Enter</b> в любом поле — расчёт выполнится сразу.</p>
+
+    <div id="profitResult"></div>
+  </form>
 
   <div class="market">
     <h3>🔎 Поиск NFT · минимальный прайс (Portals)</h3>
@@ -282,10 +312,6 @@
       </div>
     </div>
   </div>
-
-  <div id="result"></div>
-
-  <div class="top-wrap" id="topWrap"></div>
 </div>
 
 <script>
@@ -299,8 +325,11 @@
   // Комиссии при продаже (значение X → цена продажи):
   const COMMISSION_1 = 0.10;          // первая комиссия — 10%
   const COMMISSION_2 = 0.06;          // вторая комиссия — 6%
+  // Фиксированный вычет из профита:
+  const FIXED_FEE_RUB = 60;           // из профита вычитается 60 ₽
+  // Наценка к потраченным монетам (комиссия сети за перевод/подарок):
+  const FEE_COINS = 0.35;             // к потраченным монетам прибавляется 0.35
   // Ключи локального хранилища браузера:
-  const STORAGE_KEY      = 'gramGiftsV1';  // список подарков (NFT)
   const STORAGE_KEY_KURS = 'gramKursV1';   // введённый курс доллара
   const STORAGE_KEY_PROXY = 'musorProxyUrl'; // URL прокси Tonnel (Vercel, вариант А)
   // Резервный каталог на случай, если Portals недоступен:
@@ -321,53 +350,31 @@
   // ================================================
 
   let cenaMonety = CENA_MONETY_FALLBACK; // актуальный курс монеты к доллару
-  let gifts = [];                        // [{id,name,entry,exit,diff,coins,x,kurs,cenaMonety,createdAt}]
 
   // ============ ЛОКАЛЬНОЕ ХРАНИЛИЩЕ (localStorage) ============
+  // Список подарков и лидерборд удалены — хранится только курс доллара и URL прокси.
   function storageGet(key) {
     try { return window.localStorage.getItem(key); } catch (e) { return null; }
   }
   function storageSet(key, value) {
     try { window.localStorage.setItem(key, value); return true; } catch (e) { return false; }
   }
-  function saveGifts() {
-    const ok = storageSet(STORAGE_KEY, JSON.stringify(gifts));
-    const hint = document.getElementById('storeHint');
-    if (hint) {
-      hint.textContent = ok
-        ? '💾 Список хранится локально в этом браузере — перезагрузка страницы его не сбросит.'
-        : '⚠ Браузер блокирует локальное хранилище — список не сохранится.';
-    }
-    return ok;
-  }
-  function loadGifts() {
-    const raw = storageGet(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        gifts = parsed.filter(function (g) {
-          return g && typeof g.name === 'string' && g.name &&
-                 isFinite(g.entry) && isFinite(g.exit);
-        });
-      }
-    } catch (e) { gifts = []; }
-  }
 
   function load() {
-    loadGifts();                                // поднять сохранённый список
     const savedKurs = parseFloat(storageGet(STORAGE_KEY_KURS));
     const kursEl = document.getElementById('kurs');
     kursEl.value = String(savedKurs > 0 ? savedKurs : KURS_DOLLARA);
+    // Курс на 2-й вкладке по умолчанию повторяет курс из 1-й вкладки
+    document.getElementById('pKurs').value = kursEl.value;
     kursEl.addEventListener('input', function () {
       storageSet(STORAGE_KEY_KURS, this.value); // курс тоже запоминаем
+      if (!pKursDirty) document.getElementById('pKurs').value = this.value;
       syncChips();
     });
     refreshGramRate();                          // загрузить курс GRAM сразу
     setInterval(refreshGramRate, 60000);        // авто-обновление каждую минуту
     initGiftSearch();                           // поиск NFT + минимальный прайс Tonnel
-    renderList();                               // показать сохранённый список
-    saveGifts();                                // записать список и проверить хранилище
+    initTabs();                                 // вкладки + расчёт по Enter
     syncChips();
   }
 
@@ -570,9 +577,11 @@
     const coins = tonToCoins(giftTonPrice, giftRatedTon, cenaMonety);
     if (!(coins > 0)) { status.textContent = 'Не смог пересчитать TON в монеты — проверь курсы.'; return; }
     document.getElementById('coins').value = coins.toFixed(4);
+    switchTab('calc');                            // показываем вкладку с расчётом
     document.getElementById('coins').focus();
     status.textContent = 'В строку 3 подставлено ' + coins.toFixed(4) + ' монет (≈ ' + giftTonPrice +
-      ' TON по минимальному прайсу Tonnel). Заполни остальные строки и жми «Рассчитать и сохранить» — цена покупки в рублях запишется в список.';
+      ' TON по минимальному прайсу Tonnel). Заполни остальные строки и нажми «Рассчитать» (или Enter) — ' +
+      'цена покупки и профит посчитаются сами.';
   }
   // Кнопка «Взять как цену продажи»: минимальный прайс Tonnel → строка 4 (X).
   // Цена продажи в рублях затем посчитается сама с комиссиями 10% + 6%.
@@ -581,16 +590,21 @@
     if (!(giftTonWithFee > 0)) { status.textContent = 'Сначала выбери NFT — минимальный прайс ещё не загружен.'; return; }
     if (!(cenaMonety > 0)) { status.textContent = 'Дождись загрузки курса GRAM (строка 2).'; return; }
     document.getElementById('x').value = giftTonWithFee.toFixed(4);
+    switchTab('calc');                            // показываем вкладку с расчётом
     document.getElementById('x').focus();
     status.textContent = 'В строку 4 подставлено ' + giftTonWithFee.toFixed(4) +
-      ' (≈ ' + giftTonPrice + ' TON + 10% комиссии Tonnel). Заполни остальные строки и жми «Рассчитать и сохранить» — цена продажи в рублях запишется в список.';
+      ' (≈ ' + giftTonPrice + ' TON + 10% комиссии Tonnel). Заполни остальные строки и нажми «Рассчитать» (или Enter) — ' +
+      'цена продажи и профит посчитаются сами.';
   }
 
+  // ============ РАСЧЁТ (вкладка 1) ============
+  // Цена покупки (за сколько купил), ₽.
+  // К потраченным монетам прибавляется 0.35 (комиссия сети).
   function autoEntry() {
     const coins = parseFloat(document.getElementById('coins').value);
     const kurs  = parseFloat(document.getElementById('kurs').value);
     if (!(coins > 0) || !(kurs > 0)) return 0;
-    return coins * cenaMonety * kurs;
+    return (coins + FEE_COINS) * cenaMonety * kurs;
   }
   // Цена продажи (выход), ₽: X минус 10%, затем минус 6%
   function autoExit() {
@@ -603,7 +617,8 @@
     document.getElementById('result').innerHTML = html;
   }
 
-  function add() {
+  // Основной расчёт: покупка → продажа → профит (минус 60 ₽).
+  function calc() {
     const kursEl  = document.getElementById('kurs');
     const coinsEl = document.getElementById('coins');
     const xEl     = document.getElementById('x');
@@ -612,17 +627,13 @@
     const kurs  = parseFloat(kursEl.value);
     const coins = parseFloat(coinsEl.value);
     const x     = parseFloat(xEl.value);
-    const name  = nameEl.value.trim();
+    const name  = nameEl.value.trim();   // название необязательно
 
     // Цена покупки (за сколько купил), ₽ — считается автоматически
     const entry = autoEntry();
     // Цена продажи (за сколько продал, после комиссий), ₽ — считается автоматически
     const exit  = autoExit();
 
-    if (!name) {
-      showResult('<div class="msg err">❌ Укажи название подарка (строка 5).</div>');
-      return;
-    }
     if (!(coins > 0) || !(kurs > 0) || !(entry > 0)) {
       showResult('<div class="msg err">❌ Заполни строки 1–3 (курс, монеты) — цена покупки посчитается сама.</div>');
       return;
@@ -632,30 +643,14 @@
       return;
     }
 
-    const diff = exit - entry;                                   // разница, ₽
-
-    gifts.push({
-      id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 8),
-      name: name,
-      entry: entry,
-      exit: exit,
-      diff: diff,
-      coins: coins > 0 ? coins : null,
-      x: x > 0 ? x : null,
-      kurs: kurs > 0 ? kurs : null,
-      cenaMonety: cenaMonety,
-      createdAt: new Date().toISOString()
-    });
-
-    saveGifts();                                                 // сохранить в localStorage
-    renderList();
-    syncChips();
+    const diff = exit - entry - FIXED_FEE_RUB;        // профит, ₽ (из него вычтены 60 ₽)
 
     showResult('<div class="msg ' + (diff > 0 ? 'ok' : 'no') + '">' +
-      (diff > 0 ? '✅' : '⚠') + ' Подарок: <b>' + esc(name) + '</b> — разница <b>' + fmt(diff) +
-      ' ₽</b><br><span style="font-size:13px">Купил: ' + fmt(entry) +
-      ' ₽ &nbsp;·&nbsp; Продал после комиссий (' + Math.round(COMMISSION_1 * 100) + '% + ' +
-      Math.round(COMMISSION_2 * 100) + '%): ' + fmt(exit) + ' ₽</span></div>');
+      (diff > 0 ? '✅' : '⚠') + (name ? ' Подарок: <b>' + esc(name) + '</b> — ' : ' ') +
+      'профит <b>' + fmt(diff) + ' ₽</b><br><span style="font-size:13px">Купил: ' + fmt(entry) +
+      ' ₽ (монеты +' + FEE_COINS + ') &nbsp;·&nbsp; Продал после комиссий (' +
+      Math.round(COMMISSION_1 * 100) + '% + ' + Math.round(COMMISSION_2 * 100) + '%): ' +
+      fmt(exit) + ' ₽ &nbsp;·&nbsp; Вычет: ' + FIXED_FEE_RUB + ' ₽</span></div>');
 
     // Очистить строки 3–5 для следующего ввода (курс и цена GRAM остаются)
     coinsEl.value = '';
@@ -664,58 +659,115 @@
     coinsEl.focus();
   }
 
-  function renderList() {
-    const wrap = document.getElementById('topWrap');
-    if (!gifts.length) {
-      wrap.innerHTML = '<h3>🏆 Список подарков (NFT)</h3>' +
-        '<p class="note" style="margin:0">Пока пусто. Заполни таблицу и нажми «Рассчитать и сохранить» — подарок останется в списке даже после перезагрузки страницы.</p>';
+  // ============ РАСЧЁТ ЦЕНЫ ПРОДАЖИ ПО ПРОФИТУ (вкладка 2) ============
+  // Вводим потраченные монеты и желаемый профит — получаем цену продажи в рублях.
+  function calcProfit() {
+    const coinsEl  = document.getElementById('pCoins');
+    const profitEl = document.getElementById('pProfit');
+    const kursEl   = document.getElementById('pKurs');
+    const out      = document.getElementById('profitResult');
+
+    const coins  = parseFloat(coinsEl.value);
+    const profit = parseFloat(profitEl.value);
+    const kurs   = parseFloat(kursEl.value) || parseFloat(document.getElementById('kurs').value);
+
+    if (!(coins > 0)) {
+      out.innerHTML = '<div class="msg err">❌ Укажи, сколько монет потратил.</div>';
+      return;
+    }
+    if (!(kurs > 0)) {
+      out.innerHTML = '<div class="msg err">❌ Укажи курс доллара к рублю.</div>';
+      return;
+    }
+    if (!isFinite(profit)) {
+      out.innerHTML = '<div class="msg err">❌ Укажи желаемый профит в рублях.</div>';
       return;
     }
 
-    const sorted = gifts.slice().sort(function (a, b) { return b.diff - a.diff; });
-    let sumIn = 0, sumOut = 0, sumDiff = 0;
+    // Цена покупки с учётом +0.35 монеты
+    const entry   = (coins + FEE_COINS) * cenaMonety * kurs;
+    // Сколько рублей нужно получить за продажу: покупка + фиксированные 60 ₽ + желаемый профит
+    const exit    = entry + FIXED_FEE_RUB + profit;
+    // Значение X (до комиссий) — его и вставляем в строку 4 первой вкладки
+    const x       = exit / (1 - COMMISSION_1) / (1 - COMMISSION_2);
+    // Эта же цена в монетах по текущему курсу GRAM
+    const inCoins = cenaMonety > 0 ? x / cenaMonety : 0;
+    // Проверка: профит после вычета 60 ₽
+    const diff    = exit - entry - FIXED_FEE_RUB;
 
-    let html = '<h3>🏆 Список подарков (NFT) <span class="cnt">' + gifts.length + '</span></h3>' +
-      '<table><tr><th>#</th><th>Подарок</th><th>Купил, ₽</th><th>Продал, ₽</th><th>Разница, ₽</th><th></th></tr>';
+    out.innerHTML =
+      '<div class="profit-box">' +
+        '<div class="cap">Продать за (после комиссий ' + Math.round(COMMISSION_1 * 100) + '% + ' +
+          Math.round(COMMISSION_2 * 100) + '%)</div>' +
+        '<div class="big">' + fmt(exit) + ' ₽</div>' +
+        '<div class="cap">Значение X для строки 4 (до комиссий)</div>' +
+        '<div class="xval">' + fmt(x) + '</div>' +
+        '<table>' +
+          '<tr><td class="k">Потрачено монет</td><td class="v">' + fmt(coins) + ' + ' + FEE_COINS +
+            ' = ' + fmt(coins + FEE_COINS) + '</td></tr>' +
+          '<tr><td class="k">Цена покупки</td><td class="v">' + fmt(entry) + ' ₽</td></tr>' +
+          '<tr><td class="k">Желаемый профит</td><td class="v">' + fmt(profit) + ' ₽</td></tr>' +
+          '<tr><td class="k">Фиксированный вычет</td><td class="v">' + FIXED_FEE_RUB + ' ₽</td></tr>' +
+          '<tr><td class="k">Профит после вычета</td><td class="v">' + fmt(diff) + ' ₽</td></tr>' +
+          '<tr><td class="k">Цена в монетах (по курсу $' + cenaMonety + ')</td><td class="v">' +
+            fmt(inCoins) + '</td></tr>' +
+        '</table>' +
+      '</div>';
+  }
 
-    sorted.forEach(function (g, i) {
-      sumIn   += g.entry;
-      sumOut  += g.exit;
-      sumDiff += g.diff;
-      html += '<tr>' +
-        '<td>' + (i + 1) + '</td>' +
-        '<td>' + esc(g.name) + '</td>' +
-        '<td>' + fmt(g.entry) + '</td>' +
-        '<td>' + fmt(g.exit) + '</td>' +
-        '<td class="' + (g.diff > 0 ? 'pos' : 'neg') + '"><b>' + fmt(g.diff) + '</b></td>' +
-        '<td><button type="button" class="del" title="Удалить подарок" onclick="removeGift(\'' + g.id + '\')">🗑</button></td>' +
-        '</tr>';
+  // ============ ВКЛАДКИ + РАСЧЁТ ПО ENTER ============
+  let activeTab = 'calc';
+  let pKursDirty = false;   // пользователь сам изменил курс на 2-й вкладке
+  function switchTab(name) {
+    activeTab = name;
+    const tabs = document.querySelectorAll('.tab');
+    for (let i = 0; i < tabs.length; i++) {
+      const on = tabs[i].getAttribute('data-tab') === name;
+      tabs[i].classList.toggle('active', on);
+      tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+    }
+    const panels = document.querySelectorAll('.tab-panel');
+    for (let i = 0; i < panels.length; i++) {
+      panels[i].hidden = panels[i].getAttribute('data-panel') !== name;
+    }
+  }
+  function initTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    for (let i = 0; i < tabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () { switchTab(btn.getAttribute('data-tab')); });
+      })(tabs[i]);
+    }
+    // Расчёт по Enter (работает на ПК)
+    document.getElementById('calcForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      calc();
     });
-
-    html += '<tr class="totals"><td></td><td>Итого: ' + gifts.length + ' шт.</td>' +
-      '<td>' + fmt(sumIn) + '</td><td>' + fmt(sumOut) + '</td>' +
-      '<td class="' + (sumDiff > 0 ? 'pos' : 'neg') + '">' + fmt(sumDiff) + '</td><td></td></tr>';
-    html += '</table>';
-    html += '<button type="button" class="clear" onclick="clearGifts()">Очистить весь список</button>';
-
-    wrap.innerHTML = html;
+    document.getElementById('profitForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      calcProfit();
+    });
+    // Курс на 2-й вкладке: пока пользователь его не трогал — повторяет курс 1-й вкладки
+    document.getElementById('pKurs').addEventListener('input', function () {
+      pKursDirty = true;
+    });
+    // Enter в любом поле активной вкладки запускает расчёт
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      const t = e.target;
+      if (!t) return;
+      if (t.tagName === 'TEXTAREA' || t.id === 'giftSearch') return; // поиск NFT обрабатывается отдельно
+      if (t.tagName === 'BUTTON') return;                            // Enter сам нажимает кнопку
+      if (t.closest && t.closest('.tab-panel')) return;               // внутри формы Enter отправляет форму
+      e.preventDefault();
+      submitActiveForm();
+    });
   }
-
-  // Удалить один подарок (и из списка, и из локального хранилища)
-  function removeGift(id) {
-    gifts = gifts.filter(function (g) { return String(g.id) !== String(id); });
-    saveGifts();
-    renderList();
-  }
-
-  // Полностью очистить список
-  function clearGifts() {
-    if (!gifts.length) return;
-    if (!window.confirm('Удалить весь список подарков (' + gifts.length + ' шт.)? Отменить будет нельзя.')) return;
-    gifts = [];
-    saveGifts();
-    renderList();
-    showResult('');
+  function submitActiveForm() {
+    const form = document.getElementById(activeTab === 'profit' ? 'profitForm' : 'calcForm');
+    if (!form) return;
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', { cancelable: true }));
   }
 
   function fmt(v) {
