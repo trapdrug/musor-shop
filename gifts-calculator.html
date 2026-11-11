@@ -697,11 +697,11 @@
 
     out.innerHTML =
       '<div class="profit-box">' +
-        '<div class="cap">Продать за (после комиссий ' + Math.round(COMMISSION_1 * 100) + '% + ' +
+        '<div class="cap">Продать за (цена без комиссий) — это значение X для строки 4</div>' +
+        '<div class="big">' + fmt(x) + ' ₽</div>' +
+        '<div class="cap">Получишь на руки (после комиссий ' + Math.round(COMMISSION_1 * 100) + '% + ' +
           Math.round(COMMISSION_2 * 100) + '%)</div>' +
-        '<div class="big">' + fmt(exit) + ' ₽</div>' +
-        '<div class="cap">Значение X для строки 4 (до комиссий)</div>' +
-        '<div class="xval">' + fmt(x) + '</div>' +
+        '<div class="xval">' + fmt(exit) + ' ₽</div>' +
         '<table>' +
           '<tr><td class="k">Потрачено монет</td><td class="v">' + fmt(coins) + ' + ' + FEE_COINS +
             ' = ' + fmt(coins + FEE_COINS) + '</td></tr>' +
