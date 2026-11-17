@@ -239,7 +239,7 @@
       <span class="chip"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="10" width="18" height="11" rx="1.8" fill="#f43f5e"/><rect x="2.4" y="6" width="19.2" height="4" rx="1.8" fill="#e11d48"/><rect x="10.8" y="6" width="2.4" height="15" fill="#fbbf24"/><path d="M12 6 C9 1.5 3.5 3.5 4.5 7.5 C5.5 10.5 10 9.5 12 6 Z" fill="#e11d48"/><path d="M12 6 C15 1.5 20.5 3.5 19.5 7.5 C18.5 10.5 14 9.5 12 6 Z" fill="#e11d48"/></svg><span>Подарок</span></span>
     </div>
   </header>
-  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз: сколько монет потратил и значение X. Калькулятор сам посчитает цену покупки (с +0.35 монеты) и цену продажи в рублях. Из профита вычитается 60 ₽. Вкладка «Цена продажи» считает, за сколько ₽ продать подарок, чтобы получить нужный профит.</p>
+  <p class="note">Строка 1 — курс доллара вводишь вручную (например, по P2P). Строка 2 — спотовая цена GRAM/USDT с Bybit автоматически. Строки 3–4 вводишь каждый раз: сколько монет потратил и значение X. Калькулятор сам посчитает цену покупки и цену продажи в рублях, а также профит. Вкладка «Цена продажи» считает, за сколько ₽ продать подарок, чтобы получить нужный профит.</p>
 
   <!-- ==================== ВКЛАДКИ ==================== -->
   <div class="tabs" role="tablist">
@@ -261,7 +261,7 @@
         <div id="rateStatus" style="font-size:11px; color:#77808f; margin-top:4px;"></div>
       </td>
     </tr>
-    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>3. Сколько монет потратил</span><span class="sub">К этому количеству автоматически прибавляется 0.35 монеты</span></td><td><input id="coins" type="number" min="0" step="any" placeholder="0"></td></tr>
+    <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>3. Сколько монет потратил</span></td><td><input id="coins" type="number" min="0" step="any" placeholder="0"></td></tr>
     <tr>
       <td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><text x="12" y="17.2" font-family="Segoe UI, Arial" font-weight="bold" font-size="13" fill="#fff" text-anchor="middle">$</text></svg>4. Стоимость продажи (значение X)</span><span class="sub">Из X вычитается 10%, затем ещё 6%</span></td>
       <td><input id="x" type="number" min="0" step="any" placeholder="0"></td>
@@ -278,7 +278,7 @@
   <!-- ==================== ВКЛАДКА 2: ЦЕНА ПРОДАЖИ ПО ПРОФИТУ ==================== -->
   <form id="profitForm" class="tab-panel" data-panel="profit" hidden autocomplete="off">
     <table>
-      <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>1. Сколько монет потратил</span><span class="sub">К этому количеству автоматически прибавляется 0.35 монеты</span></td><td><input id="pCoins" type="number" min="0" step="any" placeholder="0"></td></tr>
+      <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="6.2" fill="#f59e0b" stroke="#b45309" stroke-width="1"/><path d="M7 10.8 a5 5 0 0 0 10 0 v1.8 a5 5 0 0 1 -10 0 Z" fill="#d97706"/></svg>1. Сколько монет потратил</span></td><td><input id="pCoins" type="number" min="0" step="any" placeholder="0"></td></tr>
       <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#16a34a"/><text x="12" y="17.2" font-family="Segoe UI, Arial" font-weight="bold" font-size="13" fill="#fff" text-anchor="middle">$</text></svg>2. Профит, который хочу получить</span><span class="sub">В рублях — сколько заработать на подарке</span></td><td><input id="pProfit" type="number" step="any" placeholder="0"></td></tr>
       <tr><td class="label"><span class="lbl"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.2" y="2.2" width="19.6" height="19.6" rx="5.5" fill="#ea580c"/><text x="12" y="17.6" font-family="Segoe UI, Arial" font-weight="bold" font-size="11" fill="#fff" text-anchor="middle">₽</text></svg>Курс доллара к рублю</span><span class="sub">Берётся из строки 1 первой вкладки</span></td><td><input id="pKurs" type="number" min="0" step="any" placeholder="Курс"></td></tr>
     </table>
@@ -326,9 +326,9 @@
   const COMMISSION_1 = 0.10;          // первая комиссия — 10%
   const COMMISSION_2 = 0.06;          // вторая комиссия — 6%
   // Фиксированный вычет из профита:
-  const FIXED_FEE_RUB = 60;           // из профита вычитается 60 ₽
+  const FIXED_FEE_RUB = 100;          // из профита вычитается 100 ₽
   // Наценка к потраченным монетам (комиссия сети за перевод/подарок):
-  const FEE_COINS = 0.35;             // к потраченным монетам прибавляется 0.35
+  const FEE_COINS = 0.4;              // к потраченным монетам прибавляется 0.4
   // Ключи локального хранилища браузера:
   const STORAGE_KEY_KURS = 'gramKursV1';   // введённый курс доллара
   const STORAGE_KEY_PROXY = 'musorProxyUrl'; // URL прокси Tonnel (Vercel, вариант А)
@@ -599,7 +599,7 @@
 
   // ============ РАСЧЁТ (вкладка 1) ============
   // Цена покупки (за сколько купил), ₽.
-  // К потраченным монетам прибавляется 0.35 (комиссия сети).
+  // К потраченным монетам прибавляется комиссия сети по монетам.
   function autoEntry() {
     const coins = parseFloat(document.getElementById('coins').value);
     const kurs  = parseFloat(document.getElementById('kurs').value);
@@ -617,7 +617,7 @@
     document.getElementById('result').innerHTML = html;
   }
 
-  // Основной расчёт: покупка → продажа → профит (минус 60 ₽).
+  // Основной расчёт: покупка → продажа → профит.
   function calc() {
     const kursEl  = document.getElementById('kurs');
     const coinsEl = document.getElementById('coins');
@@ -643,14 +643,14 @@
       return;
     }
 
-    const diff = exit - entry - FIXED_FEE_RUB;        // профит, ₽ (из него вычтены 60 ₽)
+    const diff = exit - entry - FIXED_FEE_RUB;        // профит, ₽
 
     showResult('<div class="msg ' + (diff > 0 ? 'ok' : 'no') + '">' +
       (diff > 0 ? '✅' : '⚠') + (name ? ' Подарок: <b>' + esc(name) + '</b> — ' : ' ') +
       'профит <b>' + fmt(diff) + ' ₽</b><br><span style="font-size:13px">Купил: ' + fmt(entry) +
-      ' ₽ (монеты +' + FEE_COINS + ') &nbsp;·&nbsp; Продал после комиссий (' +
+      ' ₽ &nbsp;·&nbsp; Продал после комиссий (' +
       Math.round(COMMISSION_1 * 100) + '% + ' + Math.round(COMMISSION_2 * 100) + '%): ' +
-      fmt(exit) + ' ₽ &nbsp;·&nbsp; Вычет: ' + FIXED_FEE_RUB + ' ₽</span></div>');
+      fmt(exit) + ' ₽</span></div>');
 
     // Очистить строки 3–5 для следующего ввода (курс и цена GRAM остаются)
     coinsEl.value = '';
@@ -684,16 +684,14 @@
       return;
     }
 
-    // Цена покупки с учётом +0.35 монеты
+    // Цена покупки (с учётом комиссии сети по монетам)
     const entry   = (coins + FEE_COINS) * cenaMonety * kurs;
-    // Сколько рублей нужно получить за продажу: покупка + фиксированные 60 ₽ + желаемый профит
+    // Сколько рублей нужно получить за продажу: покупка + фиксированный вычет + желаемый профит
     const exit    = entry + FIXED_FEE_RUB + profit;
     // Значение X (до комиссий) — его и вставляем в строку 4 первой вкладки
     const x       = exit / (1 - COMMISSION_1) / (1 - COMMISSION_2);
     // Эта же цена в монетах по текущему курсу GRAM
     const inCoins = cenaMonety > 0 ? x / cenaMonety : 0;
-    // Проверка: профит после вычета 60 ₽
-    const diff    = exit - entry - FIXED_FEE_RUB;
 
     out.innerHTML =
       '<div class="profit-box">' +
@@ -703,12 +701,9 @@
           Math.round(COMMISSION_2 * 100) + '%)</div>' +
         '<div class="xval">' + fmt(exit) + ' ₽</div>' +
         '<table>' +
-          '<tr><td class="k">Потрачено монет</td><td class="v">' + fmt(coins) + ' + ' + FEE_COINS +
-            ' = ' + fmt(coins + FEE_COINS) + '</td></tr>' +
+          '<tr><td class="k">Потрачено монет</td><td class="v">' + fmt(coins) + '</td></tr>' +
           '<tr><td class="k">Цена покупки</td><td class="v">' + fmt(entry) + ' ₽</td></tr>' +
           '<tr><td class="k">Желаемый профит</td><td class="v">' + fmt(profit) + ' ₽</td></tr>' +
-          '<tr><td class="k">Фиксированный вычет</td><td class="v">' + FIXED_FEE_RUB + ' ₽</td></tr>' +
-          '<tr><td class="k">Профит после вычета</td><td class="v">' + fmt(diff) + ' ₽</td></tr>' +
           '<tr><td class="k">Цена в монетах (по курсу $' + cenaMonety + ')</td><td class="v">' +
             fmt(inCoins) + '</td></tr>' +
         '</table>' +
